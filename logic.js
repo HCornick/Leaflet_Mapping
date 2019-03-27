@@ -117,16 +117,17 @@ var magLegend  = L.control({
 });
 
 magLegend.onAdd = function(myMap) {
-  var div = L.DomUtil.create("div", "legend");
-  var labels = [];
-  var magnitudes = [0, 1, 2, 3, 4, 5];
+  var div = L.DomUtil.create("div", "legend"),
+  magnitudes = [0, 1, 2, 3, 4, 5]
+  labels = [];
   div.innerHTML='<div><b>Legend</b></div';
   // loop through our density intervals and generate a label with a colored square for each interval
   for (var i = 0; i < magnitudes.length; i++) {
     div.innerHTML +=
-        '<i style="background:' + setColor(magnitudes[i] + 1) + '"></i> ' +
+        '<li style="background:' + setColor(magnitudes[i]) + '"></li> ' +
         magnitudes[i] + (magnitudes[i + 1] ? '&ndash;' + magnitudes[i + 1] + '<br>' : '+');
   }
+  
   return div;
 };
 
