@@ -32,11 +32,12 @@ var myMap = L.map("map", {
   layers:[satellite, grayscale, outdoors]
 });
 
-// Create variables for data files: tectonic plates geojson file, and earthquake geojson link
+// Create variables for each data file: tectonic plates geojson file, and earthquake geojson link
 var platesFile = "plates.geojson"
 var quake_url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson"
 
 // Read the tectonic plates file using d3, and create a geoJson layer to add to the map
+// Set color of lines to be orange
 d3.json(platesFile, function(data) {
   plates = L.geoJson(data, {
     style: function(feature) {
@@ -53,45 +54,50 @@ d3.json(platesFile, function(data) {
 d3.json(quake_url, function(data) {
   setFeatures(data.features);
    })
-   function setColor(mag) {
-    return mag >= 5  ? '#ec0000' :
-           mag >= 4  ? '#e27d00' :
-           mag >= 3  ? '#e29d00' :
-           mag >= 2  ? '#fdc73b' :
-           mag >= 1  ? '#ccca47' :
-           mag >= 0  ? '#98f061' :
-                      '#98fe61';
-  }
 
-  function setMarkers( feature, latlng ){
-    // Change the values of these options to change the symbol's appearance
-    let options = {
-      radius: feature.properties.mag*3,
-      fillColor: setColor(feature.properties.mag),
-      color: "black",
-      weight: 1,
-      opacity: 8,
-      fillOpacity: 1.5
-    }
-    return L.circleMarker( latlng, options );
+function setColor(mag) {
+  if (mag >= 5) {
+    return '#ec0000';
+  } else if (mag >= 4) {
+    return '#e27d00';
+  } else if (mag >= 3) {
+    return '#e29d00';
+  } else if (mag >= 2) {
+    return '#fdc73b';
+  } else if (mag >= 1) {
+    return '#ccca47';
+  } else {
+    return '#98f061';
   }
+}
+
+function setMarkers( feature, latlng ){
+  // Change the values of these options to change the symbol's appearance
+  let options = {
+    radius: feature.properties.mag*3,
+    fillColor: setColor(feature.properties.mag),
+    color: "black",
+    weight: 1,
+    opacity: 8,
+    fillOpacity: 1.5
+  }
+  return L.circleMarker( latlng, options );
+}
 
 function setFeatures(earthquakeData) {
   function setLabels(feature, layer) {
-    // Set text to be in each box that appears when you click on a data point
-    layer.bindPopup("<h1>" + feature.properties.place +
-    "</h1><hr>Magnitude: " + feature.properties.mag +
-    "<br><br>" + Date(feature.properties.time));;
-   }
-
+  // Set text to be in each box that appears when you click on a data point
+  layer.bindPopup("<h1>" + feature.properties.place +
+  "</h1><hr>Magnitude: " + feature.properties.mag +
+  "<br><br>" + Date(feature.properties.time));;
+  };
   var quakes = L.geoJSON(earthquakeData, {pointToLayer: setMarkers,
     onEachFeature: setLabels
- }).addTo(myMap)
-
-createMap(quakes);
+    }).addTo(myMap);
+  createOverlay(quakes);
 }
 
-function createMap(quakes) {
+function createOverlay(quakes) {
   // Create overlay object
   var overlayMaps = {
     "Fault Lines": plates,
@@ -107,17 +113,20 @@ function createMap(quakes) {
 
 // Create legend for earquake magnitude colors, and set position
 var magLegend  = L.control({
-  position: "bottomright"
+  position: 'bottomright'
 });
 
-magLegend.onAdd = function() {
-  var div = L.DomUtil.create("div", "legend"),
-        magnitude = [0, 1, 2, 3, 4,5];
-        for (var i = 0; i < magnitude.length; i++) {
-          div.innerHTML +=
-              '<i style="background:' + setColor(magnitude[i] + 1) + '"></i> ' +
-              magnitude[i] + (magnitude[i + 1] ? ' - ' + magnitude[i + 1] + '<br>' : '+');
-      }
+magLegend.onAdd = function(myMap) {
+  var div = L.DomUtil.create("div", "legend");
+  var labels = [];
+  var magnitudes = [0, 1, 2, 3, 4, 5];
+  div.innerHTML='<div><b>Legend</b></div';
+  // loop through our density intervals and generate a label with a colored square for each interval
+  for (var i = 0; i < magnitudes.length; i++) {
+    div.innerHTML +=
+        '<i style="background:' + setColor(magnitudes[i] + 1) + '"></i> ' +
+        magnitudes[i] + (magnitudes[i + 1] ? '&ndash;' + magnitudes[i + 1] + '<br>' : '+');
+  }
   return div;
 };
 
